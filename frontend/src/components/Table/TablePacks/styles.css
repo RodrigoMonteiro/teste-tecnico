@@ -1,0 +1,27 @@
+.table-packs-container {
+  width: 100%;
+}
+
+.table-packs-header {
+  width: 100%;
+  height: 40px;
+  background-color: #2da77a;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.coluna-id,
+.coluna-idPack,
+.coluna-idProduto,
+.coluna-qtde {
+  width: 25%;
+}
+
+.coluna-id {
+  border-radius: 5px 0 0 0;
+}
+
+.coluna-qtde {
+  border-radius: 0 5px 0 0;
+}

@@ -1,0 +1,37 @@
+.table-products-container {
+  width: 100%;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.table-products-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  height: 40px;
+  width: 100%;
+  background-color: #2da77a;
+}
+
+.table-products-body {
+width: 100%;
+  /* display: block; */
+  overflow-y: scroll;
+  height: 300px;
+}
+
+.coluna-codigo {
+  width: 10%;
+}
+
+.coluna-nome {
+  width: 34%;
+}
+
+.coluna-compra {
+  width: 15%;
+}
+
+.coluna-revenda {
+  width: 15%;
+}
