@@ -12,7 +12,7 @@ export function TableProducts() {
       .get(baseApiUrl)
       .then((response) => setProductList(response.data))
       .catch((error) => console.error(error));
-  }, []);
+  }, [productList]);
 
   return (
     <div className="table-products-container">

@@ -1,12 +1,13 @@
 import "./App.css";
 import { useState } from "react";
 import { Header } from "./components/Header";
+import { Products } from "./model/Products";
 import { Table } from "./components/Table";
 import { ThemeProvider } from "@mui/material/styles";
 import { darkTheme, lightTheme } from "./styles/theme";
 import CssBaseline from "@mui/material/CssBaseline";
-import {Products} from './model/Products'
 import axios from "axios";
+import BasicModal from "./components/Modal";
 
 interface dataFile {
   product_code: string;
@@ -15,63 +16,89 @@ interface dataFile {
 
 function App() {
   const baseApiURL = "http://localhost:3000/products";
+
   const [file, setFile] = useState("");
   const [isValidFile, setIsValidFile] = useState(false);
   const [isAbleUpdateTable, setIsAbleUpdateTable] = useState(false);
-  const [Product, setProduct] = useState<Products[]>([])
+  const [showModal, setShowModal] = useState(false);
+  const [product, setProduct] = useState<Products>({
+    code: 0,
+    name: "",
+    cost_price: 0,
+    sales_price: 0,
+  });
+  const [isLightTheme, setIsLightTheme] = useState(true);
+  const [messageModal, setMessageModal] = useState("");
   const [dataFromFile, setDataFromFile] = useState<dataFile>({
     product_code: "",
     new_price: 0,
   });
-  const [isLightTheme, setIsLightTheme] = useState(true);
 
   function handleChangeTheme() {
     setIsLightTheme(!isLightTheme);
   }
 
+  async function updateProduct(product: Products) {
+    await axios.put(`${baseApiURL}/${product.code}`, product);
+    // console.log("Product", product, "updated.");
+  }
+
   const handleValidarArquivoClick = async () => {
     try {
+      if (!file) {
+        console.error("No file selected.");
+        setMessageModal("No file selected.");
+        openModal();
+        closeModalWithDelay();
+        return;
+      }
+
       const response = await axios.get(
         `${baseApiURL}/${dataFromFile.product_code}`
       );
       if (response.status === 200) {
-        setProduct(response.data)
-        const product = response.data;
-  
-        if (dataFromFile.new_price <= product.cost_price) {
-          console.error("O novo valor é menor que o valor de compra.");
+        const product = response.data[0];
+        if (!product) {
+          setMessageModal("Código do produto não existe.");
+          openModal();
+          closeModalWithDelay();
           return;
         }
-        const upperLimit = +product.sales_price * 1.1;
-        const lowerLimit = +product.sales_price * 0.9;
+        if (dataFromFile.new_price < product.cost_price) {
+          setMessageModal(
+            `O novo valor é menor que o preço de compra do produto que foi de  R$ ${product.cost_price}.`
+          );
+          openModal();
+          closeModalWithDelay();
+          return;
+        }
+
+        const upperLimit = product.sales_price * 1.1;
+        const lowerLimit = product.sales_price * 0.9;
         if (
           dataFromFile.new_price > upperLimit ||
-          dataFromFile.new_price <= lowerLimit
+          dataFromFile.new_price < lowerLimit
         ) {
-          console.error(
-            `O novo valor para atualização do produto está inválido. O preço deve está entre:  ${lowerLimit.toFixed(
+          setMessageModal(
+            `O novo valor para atualização do produto está inválido. O valor deve estar entre: R$ ${lowerLimit.toFixed(
               2
-            )} e ${upperLimit.toFixed(2)}`
+            )} e R$ ${upperLimit.toFixed(2)}.`
           );
+          openModal();
+          closeModalWithDelay();
           return;
         }
-        console.log(
-          "O valor pode ser atualizado!",
-          "upper: ",
-          upperLimit,
-          "lower: ",
-          lowerLimit,
-          "novo preco",
-          dataFromFile.new_price,
-          "preco do produto",
-          product.sales_price
-        );
+        setProduct({ ...product, sales_price: dataFromFile.new_price });
+        console.log(product)
         setIsAbleUpdateTable(true);
       } else {
-        console.error("Error ao obter os dados.");
+        setMessageModal("Um erro aconteceu ao tentar recuperar o produto.");
+        return;
       }
     } catch (error) {
-      console.error(error);
+      setMessageModal(
+        "Estrutura do arquivo inválida. O arquivo deve possuir o código do produto e o novo preço"
+      );
     }
   };
 
@@ -94,6 +121,19 @@ function App() {
     reader.readAsText(file);
   };
 
+  const closeModalWithDelay = () => {
+    setTimeout(() => {
+      setShowModal(false);
+    }, 15000);
+  };
+  const closeModal = () => {
+    setShowModal(false);
+  };
+
+  const openModal = () => {
+    setShowModal(true);
+  };
+
   return (
     <ThemeProvider theme={isLightTheme ? lightTheme : darkTheme}>
       <div className="app-container">
@@ -109,7 +149,7 @@ function App() {
                   backgroundColor: "#faf9fa",
                 }}
               >
-                {dataFromFile.product_code.length == 0
+                {dataFromFile.product_code.length === 0
                   ? "Selecione um arquivo."
                   : file}
               </div>
@@ -134,7 +174,7 @@ function App() {
                   backgroundColor: "#faf9fa",
                 }}
               >
-                {dataFromFile.product_code.length == 0
+                {dataFromFile.product_code.length === 0
                   ? "Selecione previamente um arquivo, para realizar a validação."
                   : JSON.stringify(dataFromFile)}
               </div>
@@ -152,6 +192,12 @@ function App() {
               >
                 Validar arquivo
               </button>
+              <BasicModal
+                msg={messageModal}
+                open={showModal}
+                closeWithDelay={closeModalWithDelay}
+                close={closeModal}
+              />
             </div>
 
             <div className="selection-options-atualizar-tabela">
@@ -164,6 +210,9 @@ function App() {
                 }
                 style={{
                   color: isLightTheme ? "#0f0b0f" : "#faf9fa",
+                }}
+                onClick={() => {
+                  updateProduct(product);
                 }}
                 disabled={!isAbleUpdateTable}
               >

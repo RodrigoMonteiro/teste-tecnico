@@ -5,12 +5,13 @@ const cors = require("cors");
 const app = express();
 const port = 3000;
 app.use(cors());
+app.use(express.json());
 
 const db = mysql.createConnection({
-  host: "", // Dados do BD local
-  user: "", // Dados do BD local
-  password: "", // Dados do BD local
-  database: "", // Dados do BD local
+  host: "localhost", // Dados do BD local
+  user: "root", // Dados do BD local
+  password: "Rose73Toti02!", // Dados do BD local
+  database: "ecommerce", // Dados do BD local
 });
 
 
@@ -38,6 +39,20 @@ app.get("/products/:code", (req, res) => {
     res.send(result);
   });
 });
+
+// Rota para atualizar o valor de um produto específico
+app.put("/products/:code", (req, res) => {
+  const code = req.body.code;
+  const { sales_price } = req.body;
+  const sql = `UPDATE products SET sales_price = ? WHERE code = ?`;
+  const values = [ sales_price, code];
+
+  db.query(sql, values, (err, result) => {
+    if (err) throw err;
+    res.send("Product updated successfully");
+  });
+});
+
 
 // Rota para obter todos os packs
 app.get("/packs", (req, res) => {
